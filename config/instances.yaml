@@ -1,0 +1,15 @@
+aws:
+  account: "<account id>"
+  region: "us-east-1"
+
+keyPair:
+  name: "VM-Manager"
+  path: "<path>/VM-Manager.pem"
+
+instances:
+  - name: "master"
+    type: "t2.medium"
+  - name: "worker1"
+    type: "t2.medium"
+  - name: "worker2"
+    type: "t2.medium"

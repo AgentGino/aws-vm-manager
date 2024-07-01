@@ -1,21 +1,29 @@
 #!/usr/bin/env node
-import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import { AwsVmManagerStack } from '../lib/aws-vm-manager-stack';
+import * as yaml from 'js-yaml';
+import * as fs from 'fs';
+import * as path from 'path';
+import axios from 'axios';
 
 const app = new cdk.App();
-new AwsVmManagerStack(app, 'AwsVmManagerStack', {
-  /* If you don't specify 'env', this stack will be environment-agnostic.
-   * Account/Region-dependent features and context lookups will not work,
-   * but a single synthesized template can be deployed anywhere. */
 
-  /* Uncomment the next line to specialize this stack for the AWS Account
-   * and Region that are implied by the current CLI configuration. */
-  // env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
+(async () => {
+  try {
+    // Fetch the public IP
+    const response = await axios.get('http://checkip.amazonaws.com/');
+    const laptopIp = response.data.trim();
 
-  /* Uncomment the next line if you know exactly what Account and Region you
-   * want to deploy the stack to. */
-  // env: { account: '123456789012', region: 'us-east-1' },
+    // Load configuration from YAML file
+    const configPath = path.join(__dirname, '..', 'config', 'instances.yaml');
+    const config = yaml.load(fs.readFileSync(configPath, 'utf8')) as any;
 
-  /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
-});
+    // Create the stack with the dynamic laptop IP
+    new AwsVmManagerStack(app, 'AwsVmManagerStack', { laptopIp, config, env: { account: config.aws.account, region: config.aws.region } });
+
+    app.synth();
+  } catch (error) {
+    console.error('Error fetching public IP:', error);
+  }
+})();
+
